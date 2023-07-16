@@ -15,46 +15,50 @@ namespace TodoApp.Controllers
 		{
 			_context = context;
 		}
-		
+
 		/// <summary>
 		/// Find all TodoItems.
 		/// </summary>
 		/// <returns></returns>
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems()
+		public async Task<ActionResult<IEnumerable<TodoItemReturnDTO>>> GetTodoItems()
 		{
 			if (_context.TodoItems == null)
 			{
 				return NotFound();
 			}
-			return await _context.TodoItems.ToListAsync();
+			return await _context.TodoItems.Select(x => ItemToReturnDTO(x)).ToListAsync();
 		}
 
 		/// <summary>
 		/// Create a TodoItem.
 		/// </summary>
-		/// <param name="todoItem"></param>
+		/// <param name="todoItemCreateDTO"></param>
 		/// <returns>A newly created TodoItem</returns>
 		/// <remarks>
 		///	Sample request:
 		///	
 		///		POST /api/TodoItems
 		///		{
-		///			"id": 1,
 		///			"name": "Item #1",
 		///			"isComplete": true
 		///		}
 		/// </remarks>
 		[HttpPost]
-		public async Task<ActionResult<TodoItem>> PostTodoItem(TodoItem todoItem)
+		public async Task<ActionResult<TodoItemReturnDTO>> PostTodoItem(TodoItemCreateDTO todoItemCreateDTO)
 		{
 			if (_context.TodoItems == null)
 			{
 				return Problem("Entity set 'TodoContext.TodoItems'  is null.");
 			}
+			TodoItem todoItem = new()
+			{
+				Id = 0,
+				Name = todoItemCreateDTO.Name,
+				IsComplete = todoItemCreateDTO.IsComplete
+			};
 			_context.TodoItems.Add(todoItem);
 			await _context.SaveChangesAsync();
-
 			return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
 		}
 
@@ -64,38 +68,36 @@ namespace TodoApp.Controllers
 		/// <param name="id"></param>
 		/// <returns></returns>
 		[HttpGet("{id}")]
-		public async Task<ActionResult<TodoItem>> GetTodoItem(long id)
+		public async Task<ActionResult<TodoItemReturnDTO>> GetTodoItem(long id)
 		{
 			if (_context.TodoItems == null)
 			{
 				return NotFound();
 			}
 			var todoItem = await _context.TodoItems.FindAsync(id);
-
 			if (todoItem == null)
 			{
 				return NotFound();
 			}
-
-			return todoItem;
+			return ItemToReturnDTO(todoItem);
 		}
 
 		/// <summary>
 		/// Update a specific TodoItem.
 		/// </summary>
 		/// <param name="id"></param>
-		/// <param name="todoItem"></param>
+		/// <param name="todoItemCreateDTO"></param>
 		/// <returns></returns>
 		[HttpPut("{id}")]
-		public async Task<IActionResult> PutTodoItem(long id, TodoItem todoItem)
+		public async Task<IActionResult> PutTodoItem(long id, TodoItemCreateDTO todoItemCreateDTO)
 		{
-			if (id != todoItem.Id)
+			TodoItem todoItem = new()
 			{
-				return BadRequest();
-			}
-
+				Id = id,
+				Name = todoItemCreateDTO.Name,
+				IsComplete = todoItemCreateDTO.IsComplete
+			};
 			_context.Entry(todoItem).State = EntityState.Modified;
-
 			try
 			{
 				await _context.SaveChangesAsync();
@@ -111,7 +113,6 @@ namespace TodoApp.Controllers
 					throw;
 				}
 			}
-
 			return NoContent();
 		}
 
@@ -132,10 +133,8 @@ namespace TodoApp.Controllers
 			{
 				return NotFound();
 			}
-
 			_context.TodoItems.Remove(todoItem);
 			await _context.SaveChangesAsync();
-
 			return NoContent();
 		}
 
@@ -143,5 +142,13 @@ namespace TodoApp.Controllers
 		{
 			return (_context.TodoItems?.Any(e => e.Id == id)).GetValueOrDefault();
 		}
+
+		private static TodoItemReturnDTO ItemToReturnDTO(TodoItem todoItem) =>
+			new()
+			{
+				Id = todoItem.Id,
+				Name = todoItem.Name,
+				IsComplete = todoItem.IsComplete
+			};
 	}
 }
