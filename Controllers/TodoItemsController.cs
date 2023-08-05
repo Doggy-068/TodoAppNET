@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Models;
 
 namespace TodoApp.Controllers
 {
+	[Authorize(Policy = "auth")]
 	[Route("api/[controller]")]
 	[ApiController]
 	[Produces("application/json")]
