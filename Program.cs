@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using System.Security.Claims;
 using TodoApp.Models;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TodoApp.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,9 @@ builder.Services.AddDbContext<TodoContext>(options =>
 });
 builder.Services.AddAuthorization(options =>
 {
-	options.AddPolicy("auth", policy => policy.RequireClaim(ClaimTypes.Authentication));
+	options.AddPolicy(Permission.Root, policy => policy.RequireRole(Role.Root));
+	options.AddPolicy(Permission.Admin, policy => policy.RequireRole(Role.Root, Role.Admin));
+	options.AddPolicy(Permission.User, policy => policy.RequireRole(Role.Root, Role.Admin, Role.User));
 });
 builder.Services.AddAuthentication().AddJwtBearer(options =>
 {
@@ -26,7 +28,7 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
 		ValidateIssuer = false,
 		ValidateAudience = false,
 		ValidateIssuerSigningKey = true,
-		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretKeySecretKeySecretKey"))
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.JwtSecret))
 	};
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

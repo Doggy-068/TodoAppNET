@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Models;
+using TodoApp.Utils;
 
 namespace TodoApp.Controllers
 {
-	[Authorize(Policy = "auth")]
 	[Route("api/[controller]")]
 	[ApiController]
 	[Produces("application/json")]
@@ -22,6 +22,7 @@ namespace TodoApp.Controllers
 		/// Find all TodoItems.
 		/// </summary>
 		/// <returns></returns>
+		[Authorize(policy: Permission.User)]
 		[HttpGet]
 		public async Task<ActionResult<IEnumerable<TodoItemReturnDTO>>> GetTodoItems()
 		{
@@ -46,7 +47,10 @@ namespace TodoApp.Controllers
 		///			"isComplete": true
 		///		}
 		/// </remarks>
+		/// <response code="201">Returns the newly created item.</response>
+		[Authorize(policy: Permission.Root)]
 		[HttpPost]
+		[ProducesResponseType(StatusCodes.Status201Created)]
 		public async Task<ActionResult<TodoItemReturnDTO>> PostTodoItem(TodoItemCreateDTO todoItemCreateDTO)
 		{
 			if (_context.TodoItems == null)
@@ -69,6 +73,7 @@ namespace TodoApp.Controllers
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
+		[Authorize(policy: Permission.User)]
 		[HttpGet("{id}")]
 		public async Task<ActionResult<TodoItemReturnDTO>> GetTodoItem(long id)
 		{
@@ -90,6 +95,7 @@ namespace TodoApp.Controllers
 		/// <param name="id"></param>
 		/// <param name="todoItemCreateDTO"></param>
 		/// <returns></returns>
+		[Authorize(policy: Permission.Admin)]
 		[HttpPut("{id}")]
 		public async Task<IActionResult> PutTodoItem(long id, TodoItemCreateDTO todoItemCreateDTO)
 		{
@@ -123,7 +129,10 @@ namespace TodoApp.Controllers
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
+		/// <response code="204">Delete item successfully.</response>
+		[Authorize(policy: Permission.Root)]
 		[HttpDelete("{id}")]
+		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		public async Task<IActionResult> DeleteTodoItem(long id)
 		{
 			if (_context.TodoItems == null)
